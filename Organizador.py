@@ -20,6 +20,7 @@ st.markdown("""
         padding: 25px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         margin-bottom: 20px;
+        height: 100%;
     }
     /* Estilo dos botões */
     .stButton>button {
@@ -46,7 +47,7 @@ st.markdown("""
     h1, h2, h3 {
         color: #263238;
     }
-    /* Abas */
+    /* Abas com fundo branco */
     .stTabs [data-baseweb="tab-list"] {
         gap: 24px;
     }
@@ -54,16 +55,18 @@ st.markdown("""
         height: 50px;
         white-space: pre-wrap;
         background-color: transparent;
-        border-radius: 4px;
+        border-radius: 4px 4px 0 0;
+        border-bottom: 2px solid transparent;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #E3F2FD;
+        background-color: #FFFFFF;
+        border-bottom: 2px solid #1E88E5;
+        color: #1E88E5;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # --- 2. CONFIGURAÇÕES GLOBAIS E ESTADO DA SESSÃO ---
-CURSOS = ["História do Brasil I", "História Moderna", "Metodologia da História"]
 SEGMENTOS_PADRAO = [
     {"nome": "Aquecimento", "min": 10},
     {"nome": "Exposição", "min": 25},
@@ -95,10 +98,7 @@ def resetar_aula():
 with st.sidebar:
     st.header("👨‍🏫 Configurações da Aula")
     
-    curso_selecionado = st.selectbox("Disciplina (Lista)", CURSOS, index=0)
-    curso_custom = st.text_input("Outra Disciplina (Opcional)")
-    curso = curso_custom if curso_custom else curso_selecionado
-    
+    curso = st.text_input("Disciplina", placeholder="Ex: História do Brasil I")
     data = st.date_input("Data", datetime.today())
 
     st.markdown("---")
@@ -134,6 +134,13 @@ with st.sidebar:
 # --- 4. PAINEL PRINCIPAL ---
 st.title("Painel do Dia de Aula")
 
+# Inputs para Título e Tema da Aula
+col_titulo, col_tema = st.columns(2)
+titulo_aula = col_titulo.text_input("Título da Aula", placeholder="Ex: A Era Vargas")
+tema_aula = col_tema.text_input("Tema da Aula", placeholder="Ex: Estado Novo e Populismo")
+
+st.markdown("<br>", unsafe_allow_html=True)
+
 col_timer, col_notas = st.columns([1.1, 1])
 
 with col_timer:
@@ -167,10 +174,9 @@ with col_timer:
         if col_t3.button("⏭️ Próximo", use_container_width=True):
             gasto = st.session_state.duracao_seg / 60
             st.session_state.log.append({
-                "data": data.isoformat(), "curso": curso, "tipo": "Bloco de Aula",
-                "bloco": bloco_atual["nome"], "min_previstos": bloco_atual["min"],
-                "min_gastos": round(gasto, 1), "conteudo": "",
-                "timestamp": datetime.now().isoformat()
+                "data": data.isoformat(), "curso": curso, "titulo_aula": titulo_aula, "tema_aula": tema_aula,
+                "tipo": "Bloco de Aula", "bloco": bloco_atual["nome"], "min_previstos": bloco_atual["min"],
+                "min_gastos": round(gasto, 1), "conteudo": "", "timestamp": datetime.now().isoformat()
             })
             st.session_state.idx_seg = min(idx_atual + 1, len(st.session_state.segmentos) - 1)
             st.session_state.rodando = False
@@ -207,8 +213,8 @@ with col_notas:
             if st.button("➕ Registrar Conteúdo"):
                 if conteudo:
                     st.session_state.log.append({
-                        "data": data.isoformat(), "curso": curso, "tipo": "Conteúdo", "bloco": bloco_atual["nome"],
-                        "min_previstos": "", "min_gastos": "", "conteudo": conteudo,
+                        "data": data.isoformat(), "curso": curso, "titulo_aula": titulo_aula, "tema_aula": tema_aula,
+                        "tipo": "Conteúdo", "bloco": bloco_atual["nome"], "conteudo": conteudo,
                         "timestamp": datetime.now().isoformat()
                     })
                     st.success("Conteúdo registrado no log!")
@@ -220,8 +226,8 @@ with col_notas:
             if st.button("➕ Registrar Tarefa"):
                 if tarefa:
                     st.session_state.log.append({
-                        "data": data.isoformat(), "curso": curso, "tipo": "Tarefa", "bloco": "N/A",
-                        "min_previstos": "", "min_gastos": "", "conteudo": tarefa,
+                        "data": data.isoformat(), "curso": curso, "titulo_aula": titulo_aula, "tema_aula": tema_aula,
+                        "tipo": "Tarefa", "bloco": "N/A", "conteudo": tarefa,
                         "timestamp": datetime.now().isoformat()
                     })
                     st.success("Tarefa registrada no log!")
@@ -233,8 +239,8 @@ with col_notas:
             if st.button("➕ Registrar Trabalho"):
                 if trabalho:
                     st.session_state.log.append({
-                        "data": data.isoformat(), "curso": curso, "tipo": "Trabalho", "bloco": "N/A",
-                        "min_previstos": "", "min_gastos": "", "conteudo": trabalho,
+                        "data": data.isoformat(), "curso": curso, "titulo_aula": titulo_aula, "tema_aula": tema_aula,
+                        "tipo": "Trabalho", "bloco": "N/A", "conteudo": trabalho,
                         "timestamp": datetime.now().isoformat()
                     })
                     st.success("Trabalho registrado no log!")
@@ -248,8 +254,7 @@ st.header("🧾 Log da Aula")
 
 if st.session_state.log:
     dflog = pd.DataFrame(st.session_state.log)
-    # Reorganiza as colunas para melhor visualização
-    colunas_visiveis = ['tipo', 'bloco', 'conteudo', 'min_previstos', 'min_gastos']
+    colunas_visiveis = ['tipo', 'bloco', 'conteudo', 'min_previstos', 'min_gastos', 'titulo_aula', 'tema_aula']
     df_display = dflog[[col for col in colunas_visiveis if col in dflog.columns]]
     st.dataframe(df_display, use_container_width=True)
     
