@@ -99,7 +99,7 @@ with st.sidebar:
     st.header("👨‍🏫 Configurações da Aula")
     
     curso = st.text_input("Disciplina", placeholder="Ex: História do Brasil I")
-    data = st.date_input("Data", datetime.today())
+    data = st.date_input("Data", datetime.today(), format="DD/MM/YYYY")
 
     st.markdown("---")
     st.header("👥 Lista de Presença")
@@ -118,12 +118,12 @@ with st.sidebar:
             st.warning("Nenhum aluno na lista.")
         else:
             dfp = pd.DataFrame(
-                [{"data": data.isoformat(), "curso": curso, "nome": n, "presente": p}
+                [{"data": data.strftime('%Y-%m-%d'), "curso": curso, "nome": n, "presente": p}
                  for n, p in st.session_state.presenca.items()]
             )
             st.download_button(
                 "Clique para baixar", dfp.to_csv(index=False).encode("utf-8"),
-                file_name=f"presenca_{curso}_{data}.csv", mime="text/csv"
+                file_name=f"presenca_{curso}_{data.strftime('%Y-%m-%d')}.csv", mime="text/csv"
             )
     
     if col2.button("🧹 Limpar Lista"):
@@ -134,12 +134,14 @@ with st.sidebar:
 # --- 4. PAINEL PRINCIPAL ---
 st.title("Painel do Dia de Aula")
 
-# Inputs para Título e Tema da Aula
-col_titulo, col_tema = st.columns(2)
-titulo_aula = col_titulo.text_input("Título da Aula", placeholder="Ex: A Era Vargas")
-tema_aula = col_tema.text_input("Tema da Aula", placeholder="Ex: Estado Novo e Populismo")
+# Card para Título e Tema da Aula
+with st.container():
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    col_titulo, col_tema = st.columns(2)
+    titulo_aula = col_titulo.text_input("Título da Aula", placeholder="Ex: A Era Vargas")
+    tema_aula = col_tema.text_input("Tema da Aula", placeholder="Ex: Estado Novo e Populismo")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
 
 col_timer, col_notas = st.columns([1.1, 1])
 
@@ -174,7 +176,7 @@ with col_timer:
         if col_t3.button("⏭️ Próximo", use_container_width=True):
             gasto = st.session_state.duracao_seg / 60
             st.session_state.log.append({
-                "data": data.isoformat(), "curso": curso, "titulo_aula": titulo_aula, "tema_aula": tema_aula,
+                "data": data.strftime('%Y-%m-%d'), "curso": curso, "titulo_aula": titulo_aula, "tema_aula": tema_aula,
                 "tipo": "Bloco de Aula", "bloco": bloco_atual["nome"], "min_previstos": bloco_atual["min"],
                 "min_gastos": round(gasto, 1), "conteudo": "", "timestamp": datetime.now().isoformat()
             })
@@ -213,7 +215,7 @@ with col_notas:
             if st.button("➕ Registrar Conteúdo"):
                 if conteudo:
                     st.session_state.log.append({
-                        "data": data.isoformat(), "curso": curso, "titulo_aula": titulo_aula, "tema_aula": tema_aula,
+                        "data": data.strftime('%Y-%m-%d'), "curso": curso, "titulo_aula": titulo_aula, "tema_aula": tema_aula,
                         "tipo": "Conteúdo", "bloco": bloco_atual["nome"], "conteudo": conteudo,
                         "timestamp": datetime.now().isoformat()
                     })
@@ -226,7 +228,7 @@ with col_notas:
             if st.button("➕ Registrar Tarefa"):
                 if tarefa:
                     st.session_state.log.append({
-                        "data": data.isoformat(), "curso": curso, "titulo_aula": titulo_aula, "tema_aula": tema_aula,
+                        "data": data.strftime('%Y-%m-%d'), "curso": curso, "titulo_aula": titulo_aula, "tema_aula": tema_aula,
                         "tipo": "Tarefa", "bloco": "N/A", "conteudo": tarefa,
                         "timestamp": datetime.now().isoformat()
                     })
@@ -239,7 +241,7 @@ with col_notas:
             if st.button("➕ Registrar Trabalho"):
                 if trabalho:
                     st.session_state.log.append({
-                        "data": data.isoformat(), "curso": curso, "titulo_aula": titulo_aula, "tema_aula": tema_aula,
+                        "data": data.strftime('%Y-%m-%d'), "curso": curso, "titulo_aula": titulo_aula, "tema_aula": tema_aula,
                         "tipo": "Trabalho", "bloco": "N/A", "conteudo": trabalho,
                         "timestamp": datetime.now().isoformat()
                     })
@@ -261,7 +263,7 @@ if st.session_state.log:
     st.download_button(
         "📥 Baixar Log Completo (CSV)",
         dflog.to_csv(index=False).encode("utf-8"),
-        file_name=f"log_{curso}_{data}.csv",
+        file_name=f"log_{curso}_{data.strftime('%Y-%m-%d')}.csv",
         mime="text/csv"
     )
 else:
